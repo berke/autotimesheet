@@ -42,4 +42,4 @@ let iter fns f =
          )
          entries
   in
-  List.iter (fun fn -> iter [] fn f) fns
+  List.iter (fun fn -> iter [fn] fn f) fns

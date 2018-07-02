@@ -16,12 +16,16 @@ let paths =
   let doc = "Paths to scan" in
   Arg.(non_empty & pos_all string [] & info [] ~docv:"PATH" ~doc)
 
+let detailed =
+  let doc = "Display events within a slice" in
+  Arg.(value & flag & info ["d";"detailed"] ~doc)
+
 let granularity =
   let doc = "Number of slices per day"
   in
   Arg.(value & opt int 48 & info ["g";"granularity"] ~docv:"INTEGER" ~doc)
   
-let process_t = Term.(const process $ granularity$ since $ before $ paths)
+let process_t = Term.(const process $ detailed $ granularity $ since $ before $ paths)
 
 let my_info =
   let doc = "scan directories" in

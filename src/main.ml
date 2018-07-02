@@ -34,7 +34,7 @@ let prhm oc tod =
   let min = Pervasives.truncate ((mod_float tod 3600.0) /. 60.0) in
   Printf.fprintf oc "%02d:%02d" hour min
 
-let process granularity since before paths =
+let process detailed granularity since before paths =
   let days = ref DM.empty in
 
   let t_since,t_before = Timeconv.(get_timestamp since, get_timestamp ~def:infinity ~hms:(23,59,59) before) in
@@ -73,24 +73,26 @@ let process granularity since before paths =
       let n_evs = TM.cardinal (Array.fold_left (fun tm1 tm2 -> TM.union (fun t ev1 _ -> Some ev1) tm1 tm2) TM.empty granules) in
       if n_evs > 0 then
         (
+          let worked = Array.fold_left (fun tot wd -> if TM.is_empty wd then tot else tot + 1) 0 granules in
+          let h_worked = float worked *. 24.0 /. float granularity in
           let _,tm = Timeconv.tm_of_timestamp ((y,m,d),(0,0,0)) in
-          Printf.printf "%s %04d-%02d-%02d - %d event%s\n"
-            Timeconv.week.(tm.tm_wday) y m d n_evs (if n_evs = 1 then "" else "s");
-          for g = 0 to granularity - 1 do
-            let wd = granules.(g) in
-            let n_evs = TM.cardinal wd in
-            if n_evs > 0 then
-              (
-                Printf.printf "  %a to %a - %d event%s\n"
-                  prhm (float g *. t_granule)
-                  prhm (float (g + 1) *. t_granule)
-                  n_evs (if n_evs = 1 then "" else "s");
-                TM.iter (fun t ev ->
-                    let tm = localtime t in
-                    Printf.printf "    %s %a\n"
-                      (Timeconv.time_string_of_tm tm)
-                      prev ev)
-                  wd
-              )
-          done))
+          Printf.printf "%s %04d-%02d-%02d - %.1f h - %d event%s\n"
+            Timeconv.week.(tm.tm_wday) y m d h_worked n_evs (if n_evs = 1 then "" else "s");
+            for g = 0 to granularity - 1 do
+              let wd = granules.(g) in
+              let n_evs = TM.cardinal wd in
+              if n_evs > 0 then
+                (
+                  Printf.printf "  %a to %a - %d event%s\n"
+                    prhm (float g *. t_granule)
+                    prhm (float (g + 1) *. t_granule)
+                    n_evs (if n_evs = 1 then "" else "s");
+                  if detailed then TM.iter (fun t ev ->
+                      let tm = localtime t in
+                      Printf.printf "    %s %a\n"
+                        (Timeconv.time_string_of_tm tm)
+                        prev ev)
+                    wd
+                )
+            done))
     !days
