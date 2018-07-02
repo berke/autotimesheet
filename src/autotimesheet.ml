@@ -1,19 +1,36 @@
 open Cmdliner
-   
-let process path =
-  Printf.printf "Processing %s\n%!" path
+open Main
 
-let path =
-  let doc = "Path to scan" in
-  Arg.(value & opt string "." & info ["p";"path"] ~docv:"PATH" ~doc)
+let since =
+  let doc = "Only consider events that happened since the given \
+             timestamp."
+  in
+  Arg.(value & opt (some string) None & info ["s";"since"] ~docv:"TIMESPEC" ~doc)
+
+let before =
+  let doc = "Only consider events that happened before the given timestamp."
+  in
+  Arg.(value & opt (some string) None & info ["b";"before"] ~docv:"TIMESPEC" ~doc)
+
+let paths =
+  let doc = "Paths to scan" in
+  Arg.(non_empty & pos_all string [] & info [] ~docv:"PATH" ~doc)
+
+let granularity =
+  let doc = "Number of slices per day"
+  in
+  Arg.(value & opt int 48 & info ["g";"granularity"] ~docv:"INTEGER" ~doc)
   
-let process_t = Term.(const process $ path)
+let process_t = Term.(const process $ granularity$ since $ before $ paths)
 
 let my_info =
   let doc = "scan directories" in
   let man = [
+      `S "TIMESTAMPS";
+      `P "Timestamps must be given in YYYY-MM-DD or YYYY-MM-DD HH:MM[:SS] format, \
+          and are expressed in the local timezone.";
       `S Manpage.s_bugs;
-      `P "Send bugs to foo@bar.com"
+      `P "Report bugs at https://github.com/berke/autotimesheet"
     ]
   in
   Term.info "autotimesheet" ~version:"%%VERSION%%" ~doc ~exits:Term.default_exits ~man
