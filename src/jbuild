@@ -1,0 +1,4 @@
+(executable
+ ((name autotimesheet)
+  (public_name autotimesheet)
+  (libraries (unix cmdliner))))
